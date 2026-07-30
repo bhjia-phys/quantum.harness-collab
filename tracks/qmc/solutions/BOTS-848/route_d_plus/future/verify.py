@@ -166,6 +166,32 @@ def validate_dispatch(
     task_ids = [task["task_id"] for task in tasks]
     if len(task_ids) != len(set(task_ids)):
         raise ValueError("duplicate task_id in dispatch")
+    task_id_set = set(task_ids)
+    dependencies = {
+        task["task_id"]: set(task.get("depends_on", []))
+        for task in tasks
+    }
+    for task_id, required in dependencies.items():
+        if task_id in required:
+            raise ValueError("task cannot depend on itself")
+        unknown = required - task_id_set
+        if unknown:
+            raise ValueError(
+                f"task {task_id} has unknown dependencies: {sorted(unknown)}"
+            )
+    remaining = {key: set(value) for key, value in dependencies.items()}
+    resolved: set[str] = set()
+    while remaining:
+        ready = {
+            task_id
+            for task_id, required in remaining.items()
+            if required <= resolved
+        }
+        if not ready:
+            raise ValueError("dispatch task dependency graph contains a cycle")
+        resolved.update(ready)
+        for task_id in ready:
+            del remaining[task_id]
 
     declared_root = Path(payload["run_root"]).resolve()
     if run_root is not None and declared_root != run_root.resolve():
@@ -242,6 +268,20 @@ def validate_task_certificate(
     }
     if not dispatched_inputs.issubset(certified_inputs):
         raise ValueError("task certificate omits dispatched prerequisites")
+    tasks = {
+        candidate["task_id"]: candidate for candidate in dispatch["tasks"]
+    }
+    for dependency_id in task.get("depends_on", []):
+        dependency = tasks[dependency_id]
+        dependency_dir = require_isolated_path(
+            Path(dispatch["run_root"]), dependency["run_dir"]
+        )
+        dependency_path = dependency_dir / "task-certificate.json"
+        expected = (str(dependency_path.resolve()), sha256_file(dependency_path))
+        if expected not in certified_inputs:
+            raise ValueError(
+                "task certificate omits dependency task certificate"
+            )
 
     if verify_artifacts:
         for reference in payload["input_artifacts"]:

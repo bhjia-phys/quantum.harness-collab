@@ -12,12 +12,12 @@ set -euo pipefail
 
 : "${ROUTE_D_PLUS_REPO_ROOT:?set the remote repository root}"
 : "${ROUTE_D_PLUS_DISPATCH:?set a Phase 9, 10, or 11 dispatch}"
-: "${ROUTE_D_PLUS_WORKER:?set the stage-specific worker executable}"
 : "${SLURM_ARRAY_TASK_ID:?submit this script as a Slurm array}"
 
 repo_root="$(cd -- "${ROUTE_D_PLUS_REPO_ROOT}" && pwd)"
 solution_root="${repo_root}/tracks/qmc/solutions/BOTS-848"
-python="${repo_root}/.venv/bin/python"
+python="${ROUTE_D_PLUS_PYTHON:-${repo_root}/.venv/bin/python}"
+test -x "${python}"
 
 cd "${solution_root}"
 "${python}" -m route_d_plus.future.verify preflight \
@@ -35,7 +35,8 @@ fi
 IFS=$'\t' read -r task_id run_dir \
   <<<"${task_rows[SLURM_ARRAY_TASK_ID]}"
 mkdir -p "${run_dir}"
-"${ROUTE_D_PLUS_WORKER}" \
+"${python}" -m route_d_plus.future.postfreeze_worker \
+  --repo-root "${repo_root}" \
   --dispatch "${ROUTE_D_PLUS_DISPATCH}" \
   --task-id "${task_id}" \
   --run-dir "${run_dir}" \

@@ -215,8 +215,96 @@ def certify_chiral_pair_tensors(two_q: int) -> dict[str, object]:
     }
 
 
+def _annihilate(state: int, orbital: int) -> tuple[int, int] | None:
+    mask = 1 << orbital
+    if not state & mask:
+        return None
+    sign = -1 if (state & (mask - 1)).bit_count() % 2 else 1
+    return state ^ mask, sign
+
+
+def _create(state: int, orbital: int) -> tuple[int, int] | None:
+    mask = 1 << orbital
+    if state & mask:
+        return None
+    sign = -1 if (state & (mask - 1)).bit_count() % 2 else 1
+    return state | mask, sign
+
+
+def lift_pair_operator_between(
+    two_q: int,
+    source_basis: tuple[int, ...],
+    target_basis: tuple[int, ...],
+    pair_operator: np.ndarray,
+) -> np.ndarray:
+    """Lift a two-fermion matrix between arbitrary many-body sectors."""
+
+    pair_space, _ = pair_angular_momentum_projectors(two_q)
+    operator = np.asarray(pair_operator, dtype=np.complex128)
+    expected = (pair_space.dimension, pair_space.dimension)
+    if operator.shape != expected:
+        raise ValueError(f"pair_operator must have shape {expected}")
+    target_index = {
+        state: index for index, state in enumerate(target_basis)
+    }
+    pair_occupations = [
+        tuple(
+            orbital
+            for orbital in range(two_q + 1)
+            if state & (1 << orbital)
+        )
+        for state in pair_space.states
+    ]
+    transitions = {
+        column: [
+            (row, value)
+            for row, value in enumerate(operator[:, column])
+            if abs(value) > 1.0e-15
+        ]
+        for column in range(pair_space.dimension)
+    }
+    result = np.zeros(
+        (len(target_basis), len(source_basis)), dtype=np.complex128
+    )
+    for column, state in enumerate(source_basis):
+        for source_pair_index, (first, second) in enumerate(
+            pair_occupations
+        ):
+            removed_first = _annihilate(state, first)
+            if removed_first is None:
+                continue
+            after_first, sign_first = removed_first
+            removed_second = _annihilate(after_first, second)
+            if removed_second is None:
+                continue
+            intermediate, sign_second = removed_second
+            for target_pair_index, value in transitions[source_pair_index]:
+                target_first, target_second = pair_occupations[
+                    target_pair_index
+                ]
+                created_second = _create(intermediate, target_second)
+                if created_second is None:
+                    continue
+                after_second, sign_created_second = created_second
+                created_first = _create(after_second, target_first)
+                if created_first is None:
+                    continue
+                final, sign_created_first = created_first
+                row = target_index.get(final)
+                if row is not None:
+                    result[row, column] += (
+                        sign_first
+                        * sign_second
+                        * sign_created_second
+                        * sign_created_first
+                        * value
+                    )
+    return result
+
+
 __all__ = [
     "certify_chiral_pair_tensors",
     "chiral_pair_tensors",
+    "lift_pair_operator_between",
     "pair_angular_momentum_projectors",
 ]

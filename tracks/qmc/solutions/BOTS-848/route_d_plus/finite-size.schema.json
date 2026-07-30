@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "challenge-15-route-d-plus-finite-size-v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "created_at_utc",
+    "protocol",
+    "sizes",
+    "fits",
+    "bootstrap",
+    "delta_infinity",
+    "uncertainty",
+    "architecture_modified",
+    "slurm",
+    "gates",
+    "passed"
+  ],
+  "properties": {
+    "schema_version": {"const": "challenge-15-route-d-plus-finite-size-v1"},
+    "created_at_utc": {"type": "string", "format": "date-time"},
+    "protocol": {"$ref": "#/$defs/artifact"},
+    "sizes": {"type": "array", "minItems": 3, "maxItems": 3},
+    "fits": {"type": "array", "minItems": 3},
+    "bootstrap": {
+      "type": "object",
+      "required": [
+        "seed",
+        "replicates",
+        "mc_and_seed_resampling_standard_error"
+      ]
+    },
+    "delta_infinity": {"type": "number"},
+    "uncertainty": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bootstrap_mc_and_seed",
+        "seed_spread",
+        "architecture_residual",
+        "total_quadrature"
+      ],
+      "properties": {
+        "bootstrap_mc_and_seed": {"type": "number", "minimum": 0},
+        "seed_spread": {"type": "number", "minimum": 0},
+        "architecture_residual": {"type": "number", "minimum": 0},
+        "total_quadrature": {"type": "number", "minimum": 0}
+      }
+    },
+    "architecture_modified": {"const": false},
+    "slurm": {
+      "type": "object",
+      "required": ["job_id", "cluster", "cuda_visible_devices", "elapsed_seconds"]
+    },
+    "gates": {
+      "type": "object",
+      "minProperties": 7,
+      "additionalProperties": {"const": true}
+    },
+    "passed": {"const": true}
+  },
+  "$defs": {
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 2},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    }
+  }
+}

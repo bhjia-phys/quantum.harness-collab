@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "challenge-15-route-d-plus-chirality-spectral-v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "created_at_utc",
+    "source_revision",
+    "n_electrons",
+    "two_q",
+    "architecture_freeze",
+    "algebra_certificate",
+    "protocol",
+    "architecture",
+    "checkpoint_count",
+    "phase_convention",
+    "exact_ed",
+    "dplus_by_seed",
+    "dplus_aggregate",
+    "density_mother_metric_bright_fidelity_mean",
+    "first_mother_sufficient",
+    "diagnostics",
+    "architecture_modified",
+    "slurm",
+    "gates",
+    "passed"
+  ],
+  "properties": {
+    "schema_version": {"const": "challenge-15-route-d-plus-chirality-spectral-v1"},
+    "created_at_utc": {"type": "string", "format": "date-time"},
+    "source_revision": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "n_electrons": {"const": 6},
+    "two_q": {"const": 15},
+    "architecture_freeze": {"$ref": "#/$defs/artifact"},
+    "algebra_certificate": {"$ref": "#/$defs/artifact"},
+    "protocol": {"$ref": "#/$defs/artifact"},
+    "architecture": {"$ref": "#/$defs/artifact"},
+    "checkpoint_count": {"const": 3},
+    "phase_convention": {"type": "object"},
+    "exact_ed": {"$ref": "#/$defs/summary"},
+    "dplus_by_seed": {
+      "type": "object",
+      "minProperties": 3,
+      "maxProperties": 3,
+      "additionalProperties": {"$ref": "#/$defs/summary"}
+    },
+    "dplus_aggregate": {"$ref": "#/$defs/aggregate"},
+    "density_mother_metric_bright_fidelity_mean": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "first_mother_sufficient": {"type": "boolean"},
+    "diagnostics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["exact_multiplet_splitting", "adjoint_residual"],
+      "properties": {
+        "exact_multiplet_splitting": {"type": "number", "minimum": 0},
+        "adjoint_residual": {"type": "number", "minimum": 0}
+      }
+    },
+    "architecture_modified": {"const": false},
+    "slurm": {
+      "type": "object",
+      "required": ["job_id", "cluster", "cuda_visible_devices", "elapsed_seconds"]
+    },
+    "gates": {
+      "type": "object",
+      "minProperties": 6,
+      "additionalProperties": {"type": "boolean"}
+    },
+    "passed": {"type": "boolean"}
+  },
+  "$defs": {
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 2},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "amplitude": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["real", "imag"],
+      "properties": {
+        "real": {"type": "number"},
+        "imag": {"type": "number"}
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["z_plus", "z_minus", "chi", "dominant_helicity", "amplitudes"],
+      "properties": {
+        "z_plus": {"type": "number", "minimum": 0},
+        "z_minus": {"type": "number", "minimum": 0},
+        "chi": {"type": "number", "minimum": -1, "maximum": 1},
+        "dominant_helicity": {"enum": ["plus", "minus"]},
+        "amplitudes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": {"$ref": "#/$defs/amplitude"}
+          }
+        }
+      }
+    },
+    "aggregate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["z_plus", "z_minus", "chi", "dominant_helicity"],
+      "properties": {
+        "z_plus": {"type": "number", "minimum": 0},
+        "z_minus": {"type": "number", "minimum": 0},
+        "chi": {"type": "number", "minimum": -1, "maximum": 1},
+        "dominant_helicity": {"enum": ["plus", "minus"]}
+      }
+    }
+  }
+}

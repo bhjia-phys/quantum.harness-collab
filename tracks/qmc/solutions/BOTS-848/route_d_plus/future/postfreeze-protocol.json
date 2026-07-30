@@ -1,0 +1,36 @@
+{
+  "schema_version": "challenge-15-route-d-plus-postfreeze-protocol-v1",
+  "frozen_before_postfreeze_results": true,
+  "phase9": {
+    "heldout_n_electrons": 7,
+    "seeds": [848, 1848, 2848],
+    "gap_absolute_error_max": 0.005,
+    "ground_fidelity_min": 0.95,
+    "tower_fidelity_min": 0.9,
+    "architecture_changes_allowed": false
+  },
+  "phase10": {
+    "pair_transition": {
+      "plus": "R-to-R-plus-2",
+      "minus": "R-to-R-minus-2"
+    },
+    "chi_definition": "(Z_minus-Z_plus)/(Z_minus+Z_plus)",
+    "expected_dominant_helicity": "minus",
+    "density_mother_bright_fidelity_min": 0.9,
+    "second_mother_trigger": "density-mother-bright-fidelity-below-threshold",
+    "architecture_changes_before_unified_gate": false
+  },
+  "phase11": {
+    "n_electrons": [8, 10, 12],
+    "seeds": [848, 1848, 2848],
+    "flux_rule": "two_q=3*(n_electrons-1)",
+    "fit_variable": "1/Q",
+    "fit_orders": [1, 2],
+    "linear_minimum_size_cuts": [8, 10],
+    "quadratic_minimum_size_cuts": [8],
+    "bootstrap_mc_errors": true,
+    "include_seed_spread": true,
+    "include_architecture_residual": true,
+    "architecture_changes_allowed": false
+  }
+}

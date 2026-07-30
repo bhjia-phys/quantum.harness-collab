@@ -107,6 +107,8 @@ def _load_frozen_inputs(
             ]
             or certificate["architecture_freeze"]["sha256"]
             != sha256_file(architecture_freeze_path)
+            or certificate["calibration"]["sha256"]
+            != sha256_file(calibration_path)
             or certificate["size_architecture"]["sha256"]
             != sha256_file(architecture_path)
         ):
@@ -114,6 +116,14 @@ def _load_frozen_inputs(
         checkpoint_path = require_artifact(certificate["checkpoint"])
         checkpoint = load_json(checkpoint_path)
         _validate(checkpoint, "scalable-checkpoint.schema.json")
+        if (
+            checkpoint["n_electrons"] != n_electrons
+            or checkpoint["two_q"] != 3 * (n_electrons - 1)
+            or checkpoint["source_revision"] != revision
+            or checkpoint["architecture_sha256"]
+            != sha256_file(architecture_path)
+        ):
+            raise RuntimeError("held-out checkpoint lineage mismatch")
         checkpoints.append(checkpoint)
         seeds.add(checkpoint["seed"])
     if len(seeds) != 3:

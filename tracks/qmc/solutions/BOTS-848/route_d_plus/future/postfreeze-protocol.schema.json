@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "challenge-15-route-d-plus-postfreeze-protocol-v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "frozen_before_postfreeze_results",
+    "phase9",
+    "phase10",
+    "phase11"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "challenge-15-route-d-plus-postfreeze-protocol-v1"
+    },
+    "frozen_before_postfreeze_results": {"const": true},
+    "phase9": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "heldout_n_electrons",
+        "seeds",
+        "gap_absolute_error_max",
+        "ground_fidelity_min",
+        "tower_fidelity_min",
+        "architecture_changes_allowed"
+      ],
+      "properties": {
+        "heldout_n_electrons": {"const": 7},
+        "seeds": {"$ref": "#/$defs/seeds"},
+        "gap_absolute_error_max": {"const": 0.005},
+        "ground_fidelity_min": {"const": 0.95},
+        "tower_fidelity_min": {"const": 0.9},
+        "architecture_changes_allowed": {"const": false}
+      }
+    },
+    "phase10": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pair_transition",
+        "chi_definition",
+        "expected_dominant_helicity",
+        "density_mother_bright_fidelity_min",
+        "second_mother_trigger",
+        "architecture_changes_before_unified_gate"
+      ],
+      "properties": {
+        "pair_transition": {"type": "object"},
+        "chi_definition": {"type": "string", "minLength": 8},
+        "expected_dominant_helicity": {"const": "minus"},
+        "density_mother_bright_fidelity_min": {"const": 0.9},
+        "second_mother_trigger": {
+          "const": "density-mother-bright-fidelity-below-threshold"
+        },
+        "architecture_changes_before_unified_gate": {"const": false}
+      }
+    },
+    "phase11": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "n_electrons",
+        "seeds",
+        "flux_rule",
+        "fit_variable",
+        "fit_orders",
+        "linear_minimum_size_cuts",
+        "quadratic_minimum_size_cuts",
+        "bootstrap_mc_errors",
+        "include_seed_spread",
+        "include_architecture_residual",
+        "architecture_changes_allowed"
+      ],
+      "properties": {
+        "n_electrons": {
+          "type": "array",
+          "prefixItems": [{"const": 8}, {"const": 10}, {"const": 12}],
+          "items": false
+        },
+        "seeds": {"$ref": "#/$defs/seeds"},
+        "flux_rule": {"const": "two_q=3*(n_electrons-1)"},
+        "fit_variable": {"const": "1/Q"},
+        "fit_orders": {
+          "type": "array",
+          "prefixItems": [{"const": 1}, {"const": 2}],
+          "items": false
+        },
+        "linear_minimum_size_cuts": {
+          "type": "array",
+          "prefixItems": [{"const": 8}, {"const": 10}],
+          "items": false
+        },
+        "quadratic_minimum_size_cuts": {
+          "type": "array",
+          "prefixItems": [{"const": 8}],
+          "items": false
+        },
+        "bootstrap_mc_errors": {"const": true},
+        "include_seed_spread": {"const": true},
+        "include_architecture_residual": {"const": true},
+        "architecture_changes_allowed": {"const": false}
+      }
+    }
+  },
+  "$defs": {
+    "seeds": {
+      "type": "array",
+      "prefixItems": [{"const": 848}, {"const": 1848}, {"const": 2848}],
+      "items": false
+    }
+  }
+}

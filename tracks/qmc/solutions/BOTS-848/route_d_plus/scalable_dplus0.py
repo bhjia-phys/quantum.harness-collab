@@ -150,6 +150,12 @@ def calibrate(
             "cluster": cluster,
             "cuda_visible_devices": os.environ["CUDA_VISIBLE_DEVICES"],
         },
+        "gates": {
+            "architecture_frozen": True,
+            "generator_dimension_unchanged": True,
+            "no_structural_selection": True,
+            "no_ed_access": True,
+        },
         "passed": True,
     }
     _validate(certificate, "scalable-calibration.schema.json")

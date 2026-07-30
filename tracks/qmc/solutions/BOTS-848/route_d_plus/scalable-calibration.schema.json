@@ -19,6 +19,7 @@
     "ed_accessed",
     "heldout_or_beyond_used_for_structure_selection",
     "slurm",
+    "gates",
     "passed"
   ],
   "properties": {
@@ -39,6 +40,11 @@
     "ed_accessed": {"const": false},
     "heldout_or_beyond_used_for_structure_selection": {"const": false},
     "slurm": {"$ref": "#/$defs/slurm"},
+    "gates": {
+      "type": "object",
+      "minProperties": 4,
+      "additionalProperties": {"const": true}
+    },
     "passed": {"const": true}
   },
   "$defs": {

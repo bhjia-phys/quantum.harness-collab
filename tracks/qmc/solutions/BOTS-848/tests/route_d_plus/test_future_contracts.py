@@ -8,6 +8,11 @@ from pathlib import Path
 import jsonschema
 import pytest
 
+from route_d_plus.future.prepare_postfreeze import (
+    _phase9_tasks,
+    _phase10_tasks,
+    _phase11_tasks,
+)
 from route_d_plus.future.verify import (
     SCHEMA_DIR,
     validate_dispatch,
@@ -133,6 +138,52 @@ def test_dispatch_rejects_shared_run_directory(tmp_path: Path) -> None:
     dispatch["tasks"][1]["run_dir"] = dispatch["tasks"][0]["run_dir"]
     with pytest.raises(ValueError, match="not isolated"):
         validate_dispatch(dispatch, verify_prerequisites=False)
+
+
+def test_dispatch_rejects_cyclic_task_dependencies(
+    tmp_path: Path,
+) -> None:
+    dispatch = phase7_dispatch(tmp_path)
+    dispatch["tasks"][0]["depends_on"] = [dispatch["tasks"][1]["task_id"]]
+    dispatch["tasks"][1]["depends_on"] = [dispatch["tasks"][0]["task_id"]]
+    with pytest.raises(ValueError, match="contains a cycle"):
+        validate_dispatch(dispatch, verify_prerequisites=False)
+
+
+@pytest.mark.parametrize(
+    ("stage", "builder", "expected_count"),
+    [
+        ("phase9", _phase9_tasks, 5),
+        ("phase10", _phase10_tasks, 2),
+        ("phase11", _phase11_tasks, 13),
+    ],
+)
+def test_postfreeze_task_graphs_are_valid_and_isolated(
+    tmp_path: Path,
+    stage: str,
+    builder: object,
+    expected_count: int,
+) -> None:
+    dispatch = {
+        "schema_version": (
+            "challenge-15-route-d-plus-future-dispatch-v1"
+        ),
+        "stage": stage,
+        "run_id": f"{stage}-graph-test",
+        "run_root": str(tmp_path),
+        "source_revision": REVISION,
+        "created_at_utc": "2026-07-30T00:00:00+00:00",
+        "prerequisites": [
+            {
+                "kind": "architecture-freeze",
+                "path": "/remote/architecture-freeze.json",
+                "sha256": SHA256,
+            }
+        ],
+        "tasks": builder(),
+    }
+    validate_dispatch(dispatch, verify_prerequisites=False)
+    assert len(dispatch["tasks"]) == expected_count
 
 
 def test_phase7_gate_cannot_change_capacity_protocol(

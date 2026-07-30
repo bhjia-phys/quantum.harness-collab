@@ -37,14 +37,12 @@ def _write(path: Path, payload: dict[str, Any]) -> None:
     temporary.replace(path)
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--repo-root", type=Path, required=True)
-    parser.add_argument("--two-q", type=int, action="append", required=True)
-    parser.add_argument("--output", type=Path, required=True)
-    args = parser.parse_args()
-
-    repo_root = args.repo_root.resolve()
+def certify(
+    *,
+    repo_root: Path,
+    two_q_values: list[int],
+    output_path: Path,
+) -> dict[str, Any]:
     revision = _git(repo_root, "rev-parse", "HEAD")
     clean = not bool(_git(repo_root, "status", "--porcelain"))
     job_id = os.environ.get("SLURM_JOB_ID", "")
@@ -57,7 +55,7 @@ def main() -> int:
 
     systems = [
         certify_chiral_pair_tensors(two_q)
-        for two_q in sorted(set(args.two_q))
+        for two_q in sorted(set(two_q_values))
     ]
     payload = {
         "schema_version": (
@@ -73,6 +71,27 @@ def main() -> int:
         },
         "ed_accessed": False,
         "systems": systems,
+        "gates": {
+            "pair_basis_complete": all(
+                system["gates"]["pair_basis_complete"]
+                for system in systems
+            ),
+            "spherical_adjoint": all(
+                system["gates"]["spherical_adjoint"]
+                for system in systems
+            ),
+            "rank_two_tensor": all(
+                system["gates"]["rank_two_jz"]
+                and system["gates"]["rank_two_raising"]
+                for system in systems
+            ),
+            "relative_transition_selection": all(
+                system["gates"]["plus_is_r_to_r_plus_2"]
+                and system["gates"]["minus_is_r_to_r_minus_2"]
+                for system in systems
+            ),
+            "no_ed_access": True,
+        },
         "passed": all(system["passed"] for system in systems),
     }
     schema = json.loads(
@@ -83,7 +102,21 @@ def main() -> int:
     jsonschema.Draft202012Validator(
         schema, format_checker=jsonschema.FormatChecker()
     ).validate(payload)
-    _write(args.output, payload)
+    _write(output_path, payload)
+    return payload
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--repo-root", type=Path, required=True)
+    parser.add_argument("--two-q", type=int, action="append", required=True)
+    parser.add_argument("--output", type=Path, required=True)
+    args = parser.parse_args()
+    payload = certify(
+        repo_root=args.repo_root.resolve(),
+        two_q_values=args.two_q,
+        output_path=args.output.resolve(),
+    )
     return 0 if payload["passed"] else 1
 
 

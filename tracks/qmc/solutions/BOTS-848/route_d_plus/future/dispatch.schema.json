@@ -168,6 +168,14 @@
             "pattern": "^[a-z][a-z0-9_-]{2,63}$"
           }
         },
+        "depends_on": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]{1,63}$"
+          }
+        },
         "n_electrons": {"type": "integer", "minimum": 2},
         "m_sector": {
           "type": ["integer", "null"],

@@ -11,6 +11,7 @@
     "slurm",
     "ed_accessed",
     "systems",
+    "gates",
     "passed"
   ],
   "properties": {
@@ -72,6 +73,11 @@
           "passed": {"const": true}
         }
       }
+    },
+    "gates": {
+      "type": "object",
+      "minProperties": 5,
+      "additionalProperties": {"const": true}
     },
     "passed": {"const": true}
   }
