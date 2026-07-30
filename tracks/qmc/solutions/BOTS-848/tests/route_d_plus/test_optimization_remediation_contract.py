@@ -161,3 +161,24 @@ def test_dplus0_freeze_requires_phase6_and_remediated_phase7() -> None:
     assert '"selected_capacity": "D+0"' in source
     assert '"heldout_accessed": False' in source
     assert '"beyond_ed_accessed": False' in source
+
+
+def test_remediated_freeze_requires_science_and_phase7() -> None:
+    source = (
+        ROUTE_ROOT / "freeze_remediated_architecture.py"
+    ).read_text(encoding="utf-8")
+    dependency_schema = json.loads(
+        (
+            ROUTE_ROOT / "future" / "dependency.schema.json"
+        ).read_text(encoding="utf-8")
+    )
+    architecture = dependency_schema["$defs"]["architecture_freeze"]
+    properties = architecture["properties"]
+
+    assert "remediation scientific gate did not pass" in source
+    assert '!= "dplus0-sufficient"' in source
+    assert '!= "keep-D+0"' in source
+    assert '"heldout_accessed": False' in source
+    assert '"beyond_ed_accessed": False' in source
+    assert "remediation_science" in properties
+    assert "remediation_science_readback" in properties

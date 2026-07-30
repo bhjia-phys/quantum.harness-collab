@@ -233,6 +233,8 @@
         "phase7_stage_gate": {"$ref": "#/$defs/artifact"},
         "remediation_certificate": {"$ref": "#/$defs/artifact"},
         "remediation_readback": {"$ref": "#/$defs/artifact"},
+        "remediation_science": {"$ref": "#/$defs/artifact"},
+        "remediation_science_readback": {"$ref": "#/$defs/artifact"},
         "selection_stage": {"enum": ["phase7", "phase8"]},
         "selection_protocol": {"$ref": "#/$defs/artifact"},
         "selected_capacity": {"enum": ["D+0", "D+1", "D+2"]},
