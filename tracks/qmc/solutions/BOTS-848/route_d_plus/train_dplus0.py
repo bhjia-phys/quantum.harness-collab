@@ -34,6 +34,31 @@ RAW_RANKS = (2, 3, 4)
 PROPOSAL_BURN_IN_SWEEPS = 64
 
 
+def configure_system(n_electrons: int) -> None:
+    """Configure one process for a Laughlin-sequence system size.
+
+    Phase 11 launches one process per size, so process-local configuration
+    preserves task isolation while reusing the exact Phase 6 D+0 machinery.
+    """
+
+    if isinstance(n_electrons, bool) or not isinstance(
+        n_electrons, (int, np.integer)
+    ):
+        raise TypeError("n_electrons must be an integer")
+    value = int(n_electrons)
+    if value < 2:
+        raise ValueError("n_electrons must be at least two")
+    global N_ELECTRONS, TWO_Q
+    N_ELECTRONS = value
+    TWO_Q = 3 * (value - 1)
+
+
+def _architecture_schema_version() -> str:
+    if N_ELECTRONS == 6:
+        return "challenge-15-route-d-plus-architecture-v1"
+    return "challenge-15-route-d-plus-scalable-architecture-v1"
+
+
 def ground_mother_channels(configuration: np.ndarray) -> np.ndarray:
     return scalar_laughlin_amplitudes(configuration, ranks=())
 
@@ -403,6 +428,8 @@ def _pilot_samples(
     with concurrent.futures.ProcessPoolExecutor(
         max_workers=raw_amplitude_workers,
         mp_context=multiprocessing.get_context("spawn"),
+        initializer=configure_system,
+        initargs=(N_ELECTRONS,),
     ) as executor:
         tower_results = list(
             executor.map(
@@ -459,7 +486,7 @@ def calibrate_architecture(
         relative_cutoff=relative_cutoff,
     )
     return {
-        "schema_version": "challenge-15-route-d-plus-architecture-v1",
+        "schema_version": _architecture_schema_version(),
         "source_revision": source_revision,
         "n_electrons": N_ELECTRONS,
         "two_q": TWO_Q,
@@ -608,7 +635,7 @@ def train_seed(
     progress_every: int = 0,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     expected_architecture = {
-        "schema_version": "challenge-15-route-d-plus-architecture-v1",
+        "schema_version": _architecture_schema_version(),
         "n_electrons": N_ELECTRONS,
         "two_q": TWO_Q,
         "raw_generator_ranks": list(RAW_RANKS),
@@ -650,6 +677,8 @@ def train_seed(
             initial_checkpoint["seed"] != seed
             or initial_checkpoint["architecture_sha256"]
             != architecture_sha256
+            or initial_checkpoint.get("n_electrons") != N_ELECTRONS
+            or initial_checkpoint.get("two_q") != TWO_Q
         ):
             raise ValueError("initial checkpoint lineage mismatch")
         ground_coefficients = np.asarray(
@@ -832,6 +861,7 @@ __all__ = [
     "RAW_RANKS",
     "TWO_Q",
     "calibrate_architecture",
+    "configure_system",
     "estimate_centering_whitening",
     "ground_mother_channels",
     "ground_raw_channels",

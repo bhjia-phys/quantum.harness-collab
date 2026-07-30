@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "challenge-15-route-d-plus-scalable-architecture-v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "source_revision",
+    "n_electrons",
+    "two_q",
+    "raw_generator_ranks",
+    "calibration_seed",
+    "chains",
+    "samples_per_chain",
+    "raw_amplitude_workers",
+    "pilot_chain_workers",
+    "sector_weights",
+    "relative_covariance_cutoff",
+    "centering_mean",
+    "covariance",
+    "covariance_eigenvalues",
+    "whitening",
+    "retained_generators",
+    "selection_rule"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "challenge-15-route-d-plus-scalable-architecture-v1"
+    },
+    "source_revision": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "n_electrons": {"type": "integer", "minimum": 7},
+    "two_q": {"type": "integer", "minimum": 18},
+    "raw_generator_ranks": {
+      "type": "array",
+      "prefixItems": [{"const": 2}, {"const": 3}, {"const": 4}],
+      "items": false
+    },
+    "calibration_seed": {"type": "integer", "minimum": 0},
+    "chains": {"type": "integer", "minimum": 2},
+    "samples_per_chain": {"type": "integer", "minimum": 2},
+    "raw_amplitude_workers": {"type": "integer", "minimum": 1},
+    "pilot_chain_workers": {"type": "integer", "minimum": 1},
+    "sector_weights": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ground", "tower"],
+      "properties": {
+        "ground": {"const": 0.5},
+        "tower": {"const": 0.5}
+      }
+    },
+    "relative_covariance_cutoff": {"const": 1e-12},
+    "centering_mean": {"$ref": "#/$defs/vector3"},
+    "covariance": {"$ref": "#/$defs/matrix3"},
+    "covariance_eigenvalues": {"$ref": "#/$defs/vector3"},
+    "whitening": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 3,
+      "items": {"$ref": "#/$defs/vector3"}
+    },
+    "retained_generators": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 3
+    },
+    "selection_rule": {
+      "const": "algebraic-covariance-cutoff-only-no-ed"
+    }
+  },
+  "$defs": {
+    "vector3": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {"type": "number"}
+    },
+    "matrix3": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {"$ref": "#/$defs/vector3"}
+    }
+  }
+}

@@ -3,6 +3,7 @@ from __future__ import annotations
 import numpy as np
 
 from route_d_plus.train_dplus0 import (
+    configure_system,
     estimate_centering_whitening,
     raw_local_generators,
 )
@@ -44,3 +45,18 @@ def test_centering_whitening_uses_ground_tower_mixture() -> None:
     assert np.max(np.abs(identity - np.eye(3))) < 1.0e-12
     transformed = center_whiten_channels(ground, mean, whitening)
     assert transformed.shape == ground.shape
+
+
+def test_process_local_system_configuration_follows_laughlin_sequence() -> None:
+    import route_d_plus.train_dplus0 as training
+
+    configure_system(8)
+    try:
+        assert training.N_ELECTRONS == 8
+        assert training.TWO_Q == 21
+        assert (
+            training._architecture_schema_version()
+            == "challenge-15-route-d-plus-scalable-architecture-v1"
+        )
+    finally:
+        configure_system(6)
