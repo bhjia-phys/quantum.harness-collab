@@ -5,7 +5,7 @@ from pathlib import Path
 
 import jsonschema
 
-import route_d_plus.phase7 as phase7
+from route_d_plus import phase7
 from route_d_plus.phase7 import _phase7_tasks
 
 SOLUTION_ROOT = Path(__file__).resolve().parents[2]
