@@ -112,7 +112,18 @@ def _source_audit() -> None:
 
 def _run_one(request: dict[str, Any]) -> dict[str, Any]:
     started_at = dt.datetime.now(dt.timezone.utc).isoformat()
-    result, checkpoint = train_seed(
+    print(
+        json.dumps(
+            {
+                "event": "remediation-seed-start",
+                "seed": request["seed"],
+                "started_at_utc": started_at,
+            },
+            sort_keys=True,
+        ),
+        flush=True,
+    )
+    checkpoint, result = train_seed(
         request["seed"],
         architecture=request["architecture"],
         architecture_sha256=request["architecture_sha256"],
@@ -130,10 +141,27 @@ def _run_one(request: dict[str, Any]) -> dict[str, Any]:
         diagonal_shift=request["protocol"]["diagonal_shift"],
         trust_radius=request["protocol"]["trust_radius"],
         checkpoint_selection=request["protocol"]["checkpoint_selection"],
+        progress_every=1,
+    )
+    finished_at = dt.datetime.now(dt.timezone.utc).isoformat()
+    print(
+        json.dumps(
+            {
+                "event": "remediation-seed-finish",
+                "seed": request["seed"],
+                "finished_at_utc": finished_at,
+                "final_training_objective": result[
+                    "final_training_objective"
+                ],
+                "final_gap": result["final_gap"],
+            },
+            sort_keys=True,
+        ),
+        flush=True,
     )
     return {
         "started_at_utc": started_at,
-        "finished_at_utc": dt.datetime.now(dt.timezone.utc).isoformat(),
+        "finished_at_utc": finished_at,
         "result": result,
         "checkpoint": checkpoint,
     }

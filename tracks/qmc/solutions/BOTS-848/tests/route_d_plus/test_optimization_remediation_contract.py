@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 import jsonschema
+
+from route_d_plus import remediate_dplus0
 
 SOLUTION_ROOT = Path(__file__).resolve().parents[2]
 ROUTE_ROOT = SOLUTION_ROOT / "route_d_plus"
@@ -57,6 +60,49 @@ def test_remediation_does_not_import_ed_and_uses_fixed_final_update() -> None:
     assert "max_workers=3" in source
     assert "initial_checkpoint=request" in source
     assert "nvidia-smi" in batch
+
+
+def test_remediation_preserves_train_seed_return_order(
+    monkeypatch: Any,
+) -> None:
+    checkpoint = {"kind": "checkpoint"}
+    result = {
+        "kind": "result",
+        "final_training_objective": 1.25,
+        "final_gap": 0.125,
+    }
+    observed: dict[str, Any] = {}
+
+    def fake_train_seed(seed: int, **kwargs: Any) -> tuple[dict, dict]:
+        observed.update(seed=seed, **kwargs)
+        return checkpoint, result
+
+    monkeypatch.setattr(
+        remediate_dplus0, "train_seed", fake_train_seed
+    )
+    payload = remediate_dplus0._run_one(
+        {
+            "seed": 848,
+            "architecture": {},
+            "architecture_sha256": "0" * 64,
+            "base_checkpoint": {},
+            "protocol": {
+                "chains": 4,
+                "additional_updates": 48,
+                "samples_per_update_per_chain": 16,
+                "proposal_sweeps": 2,
+                "final_samples_per_chain": 512,
+                "learning_rate": 0.03,
+                "diagonal_shift": 0.03,
+                "trust_radius": 0.02,
+                "checkpoint_selection": "fixed-final-update",
+            },
+        }
+    )
+
+    assert payload["checkpoint"] is checkpoint
+    assert payload["result"] is result
+    assert observed["progress_every"] == 1
 
 
 def test_independent_remediation_readback_rehashes_every_layer() -> None:

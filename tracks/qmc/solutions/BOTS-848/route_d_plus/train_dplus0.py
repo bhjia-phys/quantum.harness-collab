@@ -605,6 +605,7 @@ def train_seed(
     diagonal_shift: float = 1.0e-2,
     trust_radius: float = 0.05,
     checkpoint_selection: str = "final_update",
+    progress_every: int = 0,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     expected_architecture = {
         "schema_version": "challenge-15-route-d-plus-architecture-v1",
@@ -697,6 +698,26 @@ def train_seed(
                 **update_record,
             }
         )
+        if progress_every > 0 and (update + 1) % progress_every == 0:
+            print(
+                json.dumps(
+                    {
+                        "event": "dplus0-update",
+                        "seed": seed,
+                        "update": update + 1,
+                        "updates": updates,
+                        "objective": update_record["objective"],
+                        "combined_gradient_norm": update_record[
+                            "combined_gradient_norm"
+                        ],
+                        "combined_step_norm": update_record[
+                            "combined_step_norm"
+                        ],
+                    },
+                    sort_keys=True,
+                ),
+                flush=True,
+            )
 
     final_ground_started = time.perf_counter()
     final_ground = [

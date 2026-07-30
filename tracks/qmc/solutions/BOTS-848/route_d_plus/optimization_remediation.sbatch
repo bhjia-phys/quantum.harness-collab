@@ -5,7 +5,7 @@
 #SBATCH --cpus-per-task=16
 #SBATCH --gres=gpu:1
 #SBATCH --mem=48G
-#SBATCH --time=04:00:00
+#SBATCH --time=10:00:00
 
 set -euo pipefail
 
@@ -31,7 +31,7 @@ export OMP_NUM_THREADS=4
 export OPENBLAS_NUM_THREADS=4
 export MKL_NUM_THREADS=4
 
-"${python}" -m route_d_plus.remediate_dplus0 \
+"${python}" -u -m route_d_plus.remediate_dplus0 \
   --repo-root "${repo_root}" \
   --phase7-stage-gate "${ROUTE_D_PLUS_PHASE7_GATE}" \
   --protocol "${protocol}" \
