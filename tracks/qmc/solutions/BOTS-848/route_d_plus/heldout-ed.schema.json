@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "challenge-15-route-d-plus-heldout-ed-v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "created_at_utc",
+    "source_revision",
+    "n_electrons",
+    "two_q",
+    "role",
+    "architecture_freeze",
+    "calibration",
+    "size_architecture",
+    "seed_certificates",
+    "integrals",
+    "results",
+    "diagnostics",
+    "heldout_used_for_structure_selection",
+    "architecture_modified",
+    "slurm",
+    "gates",
+    "passed"
+  ],
+  "properties": {
+    "schema_version": {"const": "challenge-15-route-d-plus-heldout-ed-v1"},
+    "created_at_utc": {"type": "string", "format": "date-time"},
+    "source_revision": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "n_electrons": {"const": 7},
+    "two_q": {"const": 18},
+    "role": {"const": "held-out-evaluation-only"},
+    "architecture_freeze": {"$ref": "#/$defs/artifact"},
+    "calibration": {"$ref": "#/$defs/artifact"},
+    "size_architecture": {"$ref": "#/$defs/artifact"},
+    "seed_certificates": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {"$ref": "#/$defs/artifact"}
+    },
+    "integrals": {"$ref": "#/$defs/artifact"},
+    "results": {
+      "type": "object",
+      "required": [
+        "ed_ground_energy",
+        "ed_tower_energy",
+        "ed_gap",
+        "checkpoint_records",
+        "ground_fidelity_mean",
+        "tower_fidelity_mean",
+        "dplus_gap_mean",
+        "gap_absolute_error",
+        "seed_aggregation"
+      ]
+    },
+    "diagnostics": {
+      "type": "object",
+      "required": ["checkpoint_count", "multiplet_splitting"]
+    },
+    "heldout_used_for_structure_selection": {"const": false},
+    "architecture_modified": {"const": false},
+    "slurm": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "job_id",
+        "cluster",
+        "cuda_visible_devices",
+        "elapsed_seconds"
+      ],
+      "properties": {
+        "job_id": {"type": "string", "minLength": 1},
+        "cluster": {"type": "string", "minLength": 1},
+        "cuda_visible_devices": {"type": "string", "minLength": 1},
+        "elapsed_seconds": {"type": "number", "exclusiveMinimum": 0}
+      }
+    },
+    "gates": {
+      "type": "object",
+      "minProperties": 9,
+      "additionalProperties": {"type": "boolean"}
+    },
+    "passed": {"type": "boolean"}
+  },
+  "$defs": {
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 2},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    }
+  }
+}

@@ -49,6 +49,26 @@ STAGE_GATE_VERSION = "challenge-15-route-d-plus-future-stage-gate-v1"
 MODULE_ROOT = Path(__file__).resolve().parent
 
 
+def configure_system(n_electrons: int) -> None:
+    """Configure a process-local Laughlin size for held-out ED reuse."""
+
+    if isinstance(n_electrons, bool) or not isinstance(
+        n_electrons, (int, np.integer)
+    ):
+        raise TypeError("n_electrons must be an integer")
+    value = int(n_electrons)
+    if value < 2:
+        raise ValueError("n_electrons must be at least two")
+    global N_ELECTRONS, TWO_Q
+    N_ELECTRONS = value
+    TWO_Q = 3 * (value - 1)
+    _laughlin_polynomial.cache_clear()
+    _laughlin_coefficients.cache_clear()
+    _sector_generators.cache_clear()
+    _mother.cache_clear()
+    _ground_mother.cache_clear()
+
+
 def write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(path.suffix + ".tmp")

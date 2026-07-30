@@ -5,6 +5,7 @@ from pathlib import Path
 
 import jsonschema
 
+import route_d_plus.phase7 as phase7
 from route_d_plus.phase7 import _phase7_tasks
 
 SOLUTION_ROOT = Path(__file__).resolve().parents[2]
@@ -13,6 +14,7 @@ ROUTE_ROOT = SOLUTION_ROOT / "route_d_plus"
 
 def test_phase7_domain_and_authorization_schemas_are_valid() -> None:
     for name in (
+        "heldout-ed.schema.json",
         "phase7-authorization.schema.json",
         "phase7-domain.schema.json",
     ):
@@ -34,6 +36,15 @@ def test_phase7_execution_uses_exact_isolated_task_set() -> None:
     assert sum(task["kind"] == "overlap" for task in tasks) == 1
     assert sum(task["kind"] == "span-ceiling" for task in tasks) == 1
     assert len({task["run_dir"] for task in tasks}) == 7
+
+
+def test_phase7_math_can_be_reused_for_process_local_heldout_size() -> None:
+    phase7.configure_system(7)
+    try:
+        assert phase7.N_ELECTRONS == 7
+        assert phase7.TWO_Q == 18
+    finally:
+        phase7.configure_system(6)
 
 
 def test_phase7_batch_runs_tasks_concurrently_and_aggregates() -> None:
