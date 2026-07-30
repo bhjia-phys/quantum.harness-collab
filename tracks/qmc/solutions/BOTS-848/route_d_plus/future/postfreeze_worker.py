@@ -106,6 +106,7 @@ def run(
         architecture_path = calibration_dir / "architecture.json"
         checkpoint_path = run_dir / "checkpoint.json"
         result_path = run_dir / "result.json"
+        symmetry_path = run_dir / "symmetry.json"
         domain_path = run_dir / "domain-certificate.json"
         train(
             repo_root=repo_root,
@@ -120,6 +121,7 @@ def run(
             final_samples_per_chain=128,
             checkpoint_path=checkpoint_path,
             result_path=result_path,
+            symmetry_path=symmetry_path,
             certificate_path=domain_path,
         )
         schema_path = MODULE_ROOT / "scalable-seed.schema.json"
@@ -127,6 +129,7 @@ def run(
             calibration_path,
             architecture_path,
             result_path,
+            symmetry_path,
         ]
     elif task_id == "n7-ed-overlap":
         calibration_dir = _task_dir(dispatch, "n7-calibration")

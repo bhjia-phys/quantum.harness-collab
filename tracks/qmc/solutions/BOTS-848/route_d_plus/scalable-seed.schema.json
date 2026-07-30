@@ -15,6 +15,7 @@
     "size_architecture",
     "checkpoint",
     "result",
+    "symmetry",
     "initialization",
     "architecture_modified",
     "ed_accessed",
@@ -22,6 +23,7 @@
     "heldout_or_beyond_used_for_structure_selection",
     "ground_gates",
     "tower_gates",
+    "resource_profile",
     "gates",
     "slurm",
     "passed"
@@ -38,6 +40,7 @@
     "size_architecture": {"$ref": "#/$defs/artifact"},
     "checkpoint": {"$ref": "#/$defs/artifact"},
     "result": {"$ref": "#/$defs/artifact"},
+    "symmetry": {"$ref": "#/$defs/artifact"},
     "initialization": {"const": "random-identity-nearby"},
     "architecture_modified": {"const": false},
     "ed_accessed": {"const": false},
@@ -45,6 +48,21 @@
     "heldout_or_beyond_used_for_structure_selection": {"const": false},
     "ground_gates": {"$ref": "#/$defs/gates"},
     "tower_gates": {"$ref": "#/$defs/gates"},
+    "resource_profile": {
+      "type": "object",
+      "required": [
+        "wall_seconds",
+        "coordinate_backend",
+        "n_electrons",
+        "two_q",
+        "updates",
+        "chains",
+        "samples_per_update",
+        "final_samples_per_chain",
+        "ground_ess_per_second",
+        "tower_ess_per_second"
+      ]
+    },
     "gates": {"$ref": "#/$defs/gates"},
     "slurm": {"$ref": "#/$defs/slurm"},
     "passed": {"type": "boolean"}

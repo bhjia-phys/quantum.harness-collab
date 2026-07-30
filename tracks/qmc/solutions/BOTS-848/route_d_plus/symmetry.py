@@ -10,17 +10,13 @@ from typing import Any
 import numpy as np
 from scipy.linalg import expm
 
+import route_d_plus.train_dplus0 as training
 from route_d_plus.coordinate import linear_dplus0_amplitudes
 from route_d_plus.lll import spinor
 from route_d_plus.tensor import (
     angular_momentum_matrices,
     canonical_tensor,
     rotation_matrix,
-)
-from route_d_plus.train_dplus0 import (
-    TWO_Q,
-    ground_raw_channels,
-    tower_raw_channels,
 )
 from route_d_plus.vmc import center_whiten_channels
 
@@ -54,27 +50,30 @@ def _coefficients(payload: dict[str, Any], key: str) -> np.ndarray:
     )
 
 
-def _fixed_spinors() -> np.ndarray:
-    theta = np.array([0.21, 0.64, 1.08, 1.57, 2.19, 2.81])
-    phi = np.array([0.17, 1.32, 2.73, 4.11, 5.27, 3.36])
+def _fixed_spinors(n_electrons: int) -> np.ndarray:
+    theta = np.linspace(0.21, 2.81, n_electrons)
+    phi = np.mod(
+        0.17 + np.arange(n_electrons) * 2.399963229728653,
+        2.0 * math.pi,
+    )
     u, v = spinor(theta, phi)
     return np.column_stack((u, v))
 
 
-def _ladder_error() -> float:
-    jx, jy, _ = angular_momentum_matrices(TWO_Q)
+def _ladder_error(two_q: int) -> float:
+    jx, jy, _ = angular_momentum_matrices(two_q)
     raising = jx + 1.0j * jy
     lowering = jx - 1.0j * jy
     error = 0.0
     for magnetic in range(-2, 3):
-        tensor = canonical_tensor(TWO_Q, 2, magnetic)
+        tensor = canonical_tensor(two_q, 2, magnetic)
         if magnetic < 2:
             coefficient = math.sqrt(6.0 - magnetic * (magnetic + 1.0))
             residual = (
                 raising @ tensor
                 - tensor @ raising
                 - coefficient
-                * canonical_tensor(TWO_Q, 2, magnetic + 1)
+                * canonical_tensor(two_q, 2, magnetic + 1)
             )
             error = max(error, float(np.max(np.abs(residual))))
         if magnetic > -2:
@@ -83,7 +82,7 @@ def _ladder_error() -> float:
                 lowering @ tensor
                 - tensor @ lowering
                 - coefficient
-                * canonical_tensor(TWO_Q, 2, magnetic - 1)
+                * canonical_tensor(two_q, 2, magnetic - 1)
             )
             error = max(error, float(np.max(np.abs(residual))))
     return error
@@ -96,6 +95,11 @@ def verify_checkpoint_symmetry(
     """Recompute continuous symmetry identities from immutable artifacts."""
 
     architecture_hash = checkpoint["architecture_sha256"]
+    n_electrons = int(checkpoint["n_electrons"])
+    two_q = int(checkpoint["two_q"])
+    if two_q != 3 * (n_electrons - 1):
+        raise ValueError("checkpoint violates Laughlin flux sequence")
+    training.configure_system(n_electrons)
     mean = np.asarray(architecture["centering_mean"], dtype=np.float64)
     whitening = np.asarray(architecture["whitening"], dtype=np.float64)
     ground_coefficients = _coefficients(
@@ -105,7 +109,7 @@ def verify_checkpoint_symmetry(
 
     def ground(configuration: np.ndarray) -> complex:
         channels = center_whiten_channels(
-            ground_raw_channels(configuration), mean, whitening
+            training.ground_raw_channels(configuration), mean, whitening
         )
         return complex(
             linear_dplus0_amplitudes(channels, ground_coefficients)
@@ -113,28 +117,28 @@ def verify_checkpoint_symmetry(
 
     def tower(configuration: np.ndarray) -> np.ndarray:
         channels = center_whiten_channels(
-            tower_raw_channels(configuration), mean, whitening
+            training.tower_raw_channels(configuration), mean, whitening
         )
         return np.asarray(
             linear_dplus0_amplitudes(channels, tower_coefficients),
             dtype=np.complex128,
         )
 
-    configuration = _fixed_spinors()
+    configuration = _fixed_spinors(n_electrons)
     ground_value = ground(configuration)
     tower_value = tower(configuration)
 
     scaled = configuration.copy()
     scale = 1.03 * np.exp(-0.11j)
-    scaled[3] *= scale
-    expected_scale = scale**TWO_Q
+    scaled[n_electrons // 2] *= scale
+    expected_scale = scale**two_q
     lll_error = max(
         _relative_error(ground(scaled), expected_scale * ground_value),
         _relative_error(tower(scaled), expected_scale * tower_value),
     )
 
     swapped = configuration.copy()
-    swapped[[0, 5]] = swapped[[5, 0]]
+    swapped[[0, -1]] = swapped[[-1, 0]]
     exchange_error = max(
         _relative_error(ground(swapped), -ground_value),
         _relative_error(tower(swapped), -tower_value),
@@ -165,7 +169,7 @@ def verify_checkpoint_symmetry(
         "lll_homogeneity": lll_error,
         "exchange": exchange_error,
         "scalarity": scalarity_error,
-        "ladder": _ladder_error(),
+        "ladder": _ladder_error(two_q),
         "finite_rotation": finite_rotation_error,
     }
     return {

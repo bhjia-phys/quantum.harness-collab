@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "challenge-15-route-d-plus-scalable-symmetry-v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "seed",
+    "n_electrons",
+    "two_q",
+    "architecture_sha256",
+    "rotation_convention",
+    "errors",
+    "tolerances",
+    "gates",
+    "passed"
+  ],
+  "properties": {
+    "schema_version": {"const": "challenge-15-route-d-plus-symmetry-v1"},
+    "seed": {"type": "integer", "minimum": 0},
+    "n_electrons": {"type": "integer", "minimum": 7},
+    "two_q": {"type": "integer", "minimum": 18},
+    "architecture_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "rotation_convention": {"const": "Phi_2(RX)=D2(R)@Phi_2(X)"},
+    "errors": {"$ref": "#/$defs/map"},
+    "tolerances": {"$ref": "#/$defs/map"},
+    "gates": {
+      "type": "object",
+      "minProperties": 5,
+      "additionalProperties": {"type": "boolean"}
+    },
+    "passed": {"type": "boolean"}
+  },
+  "$defs": {
+    "map": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lll_homogeneity",
+        "exchange",
+        "scalarity",
+        "ladder",
+        "finite_rotation"
+      ],
+      "properties": {
+        "lll_homogeneity": {"type": "number", "minimum": 0},
+        "exchange": {"type": "number", "minimum": 0},
+        "scalarity": {"type": "number", "minimum": 0},
+        "ladder": {"type": "number", "minimum": 0},
+        "finite_rotation": {"type": "number", "minimum": 0}
+      }
+    }
+  }
+}

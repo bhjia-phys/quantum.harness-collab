@@ -8,6 +8,7 @@ import json
 import math
 import os
 import subprocess
+import time
 from pathlib import Path
 from typing import Any
 
@@ -20,6 +21,7 @@ from route_d_plus.future.verify import (
     sha256_file,
     validate_payload,
 )
+from route_d_plus.symmetry import verify_checkpoint_symmetry
 from route_d_plus.train_dplus0 import (
     calibrate_architecture,
     configure_system,
@@ -209,8 +211,10 @@ def train(
     final_samples_per_chain: int,
     checkpoint_path: Path,
     result_path: Path,
+    symmetry_path: Path,
     certificate_path: Path,
 ) -> dict[str, Any]:
+    started = time.monotonic()
     job_id, cluster = require_gpu_slurm_environment()
     revision = _source_revision(repo_root)
     _load_freeze(architecture_freeze_path)
@@ -244,9 +248,13 @@ def train(
     _validate(checkpoint, "scalable-checkpoint.schema.json")
     write_checkpoint(checkpoint_path, checkpoint)
     _write_json(result_path, result)
+    symmetry = verify_checkpoint_symmetry(architecture, checkpoint)
+    _validate(symmetry, "scalable-symmetry.schema.json")
+    _write_json(symmetry_path, symmetry)
 
     ground_gates = _sector_gates(result["final_ground"])
     tower_gates = _sector_gates(result["final_tower"])
+    wall_seconds = time.monotonic() - started
     gates = {
         "ground_statistics": all(ground_gates.values()),
         "tower_statistics": all(tower_gates.values()),
@@ -255,6 +263,8 @@ def train(
             and result["final_gap_standard_error"] <= 0.005
         ),
         "checkpoint_schema": True,
+        "symmetry": symmetry["passed"],
+        "operator_cost": math.isfinite(wall_seconds) and wall_seconds > 0.0,
         "architecture_frozen": True,
         "no_ed_gradient": True,
         "no_structure_selection": True,
@@ -273,6 +283,7 @@ def train(
         "size_architecture": _artifact(architecture_path),
         "checkpoint": _artifact(checkpoint_path),
         "result": _artifact(result_path),
+        "symmetry": _artifact(symmetry_path),
         "initialization": "random-identity-nearby",
         "architecture_modified": False,
         "ed_accessed": False,
@@ -280,6 +291,22 @@ def train(
         "heldout_or_beyond_used_for_structure_selection": False,
         "ground_gates": ground_gates,
         "tower_gates": tower_gates,
+        "resource_profile": {
+            "wall_seconds": wall_seconds,
+            "coordinate_backend": "coupled-pair-exact-lll",
+            "n_electrons": n_electrons,
+            "two_q": 3 * (n_electrons - 1),
+            "updates": updates,
+            "chains": chains,
+            "samples_per_update": samples_per_update,
+            "final_samples_per_chain": final_samples_per_chain,
+            "ground_ess_per_second": result["final_ground"][
+                "ess_per_second"
+            ],
+            "tower_ess_per_second": result["final_tower"][
+                "ess_per_second"
+            ],
+        },
         "gates": gates,
         "slurm": {
             "job_id": job_id,
@@ -337,6 +364,9 @@ def main() -> int:
     training_parser.add_argument(
         "--result-output", type=Path, required=True
     )
+    training_parser.add_argument(
+        "--symmetry-output", type=Path, required=True
+    )
     training_parser.add_argument("--output", type=Path, required=True)
     arguments = parser.parse_args()
     if arguments.command == "calibrate":
@@ -365,6 +395,7 @@ def main() -> int:
             final_samples_per_chain=arguments.final_samples_per_chain,
             checkpoint_path=arguments.checkpoint_output.resolve(),
             result_path=arguments.result_output.resolve(),
+            symmetry_path=arguments.symmetry_output.resolve(),
             certificate_path=arguments.output.resolve(),
         )
     print(json.dumps(payload, indent=2, sort_keys=True))
