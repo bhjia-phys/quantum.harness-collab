@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "challenge-15-route-d-plus-remediation-science-readback-v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "created_at_utc",
+    "producer_revision",
+    "science_verifier_revision",
+    "readback_revision",
+    "science_certificate",
+    "science_passed",
+    "slurm",
+    "gates",
+    "passed"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "challenge-15-route-d-plus-remediation-science-readback-v1"
+    },
+    "created_at_utc": {"type": "string", "format": "date-time"},
+    "producer_revision": {"$ref": "#/$defs/revision"},
+    "science_verifier_revision": {"$ref": "#/$defs/revision"},
+    "readback_revision": {"$ref": "#/$defs/revision"},
+    "science_certificate": {"$ref": "#/$defs/artifact"},
+    "science_passed": {"type": "boolean"},
+    "slurm": {"$ref": "#/$defs/slurm"},
+    "gates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "science_schema_valid",
+        "science_hash_valid",
+        "remediation_hash_valid",
+        "remediation_readback_hash_valid",
+        "exact_three_seed_set",
+        "all_result_hashes_valid",
+        "all_checkpoint_hashes_valid",
+        "clean_readback_revision",
+        "gpu_slurm_evidence"
+      ],
+      "properties": {
+        "science_schema_valid": {"const": true},
+        "science_hash_valid": {"const": true},
+        "remediation_hash_valid": {"const": true},
+        "remediation_readback_hash_valid": {"const": true},
+        "exact_three_seed_set": {"const": true},
+        "all_result_hashes_valid": {"const": true},
+        "all_checkpoint_hashes_valid": {"const": true},
+        "clean_readback_revision": {"const": true},
+        "gpu_slurm_evidence": {"const": true}
+      }
+    },
+    "passed": {"const": true}
+  },
+  "$defs": {
+    "revision": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 2},
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "slurm": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "job_id",
+        "cluster_name",
+        "node_list",
+        "partition",
+        "gpu_devices"
+      ],
+      "properties": {
+        "job_id": {"type": "string", "minLength": 1},
+        "cluster_name": {"type": "string", "minLength": 1},
+        "node_list": {"type": "string", "minLength": 1},
+        "partition": {"type": "string", "minLength": 1},
+        "gpu_devices": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  }
+}

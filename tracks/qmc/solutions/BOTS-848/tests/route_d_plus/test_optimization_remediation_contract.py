@@ -39,12 +39,35 @@ def test_remediation_certificate_schemas_are_strict() -> None:
         "optimization-remediation-seed.schema.json",
         "optimization-remediation.schema.json",
         "optimization-remediation-readback.schema.json",
+        "remediation-science.schema.json",
+        "remediation-science-readback.schema.json",
     ):
         schema = json.loads(
             (ROUTE_ROOT / name).read_text(encoding="utf-8")
         )
         jsonschema.Draft202012Validator.check_schema(schema)
         assert schema["additionalProperties"] is False
+
+
+def test_remediation_science_reapplies_phase6_statistical_gates() -> None:
+    source = (
+        ROUTE_ROOT / "certify_remediation_science.py"
+    ).read_text(encoding="utf-8")
+    readback = (
+        ROUTE_ROOT / "verify_remediation_science.py"
+    ).read_text(encoding="utf-8")
+
+    assert '"sampling_acceptance"' in source
+    assert '"effective_samples"' in source
+    assert '"gap_precision"' in source
+    assert '"three_seed_consistency"' in source
+    assert '"rotation_invariance"' in source
+    assert "final_gap_standard_error" in source
+    assert "itertools.combinations(results, 2)" in source
+    assert "no_ed_gradient" in source
+    assert "no_ed_checkpoint_selection" in source
+    assert 'require(summary["result"])' in readback
+    assert 'require(summary["checkpoint"])' in readback
 
 
 def test_remediation_does_not_import_ed_and_uses_fixed_final_update() -> None:
