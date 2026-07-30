@@ -41,6 +41,7 @@ def test_remediation_certificate_schemas_are_strict() -> None:
         "optimization-remediation-readback.schema.json",
         "remediation-science.schema.json",
         "remediation-science-readback.schema.json",
+        "architecture-freeze-readback.schema.json",
     ):
         schema = json.loads(
             (ROUTE_ROOT / name).read_text(encoding="utf-8")
@@ -182,3 +183,16 @@ def test_remediated_freeze_requires_science_and_phase7() -> None:
     assert '"beyond_ed_accessed": False' in source
     assert "remediation_science" in properties
     assert "remediation_science_readback" in properties
+
+
+def test_architecture_freeze_readback_rehashes_every_layer() -> None:
+    source = (
+        ROUTE_ROOT / "verify_architecture_freeze.py"
+    ).read_text(encoding="utf-8")
+
+    assert 'require_artifact(freeze[name])' in source
+    assert 'require_artifact(checkpoint)' in source
+    assert '!= "dplus0-sufficient"' in source
+    assert '!= "keep-D+0"' in source
+    assert 'not science["passed"]' in source
+    assert 'not science_readback["science_passed"]' in source
